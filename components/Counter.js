@@ -11,6 +11,7 @@ import RadioGroup from 'react-native-radio-buttons-group';
 export default class Counter extends Component {
   state = {
     counter: 0.0,
+    log: '',
     data: [
       {
         label: 'Vacation Time'
@@ -21,6 +22,12 @@ export default class Counter extends Component {
     ]
   }
 
+  logChange = (text) =>{
+    this.setState({
+      log:text
+    })
+
+  }
   changeButton = data => this.setState({ data });
   addCounter = () => this.setState({ counter: this.state.counter += 0.5});
   subtractCounter = () => {
@@ -71,6 +78,16 @@ export default class Counter extends Component {
           >
             <Text style={ styles.touchText }>-</Text>
           </TouchableOpacity>
+          <View style={ styles.textView}>
+            <TextInput
+              style = {styles.textInput}
+              onChangeText={text => this.logChange(text)}
+              value = {this.state.log}
+              placeholder = 'Notes (140 char limit)'
+              multiline = {true}
+              maxLength= {140}
+            />
+          </View>
         </View>
         <Button
           title = "clear counter"
@@ -85,7 +102,7 @@ export default class Counter extends Component {
                       : (e) => this.submitSick(e.value = 'add')
                     }
         >
-          <Text style={styles.touchText}>   ADD   </Text>
+          <Text style={styles.touchText}>ADD</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style = { [styles.buttons, styles.remove] }
@@ -103,13 +120,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 0,
     justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#CCFFFF'
 
   },
+  textView:{
+    borderColor: 'black',
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 15,
+    marginTop: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 1.5, height: 1 },
+    shadowOpacity: 0.8,
+    shadowRadius: 1.5,
+  },
+  textInput:{
+    textAlign: 'center',
+    height: 100,
+    width: 150,
+    backgroundColor: 'mintcream',
+    borderRadius: 10
+  },
   buttons: {
     justifyContent: 'center',
-    alignItems: 'center',
     margin: 5,
     borderColor: 'black',
     borderRadius: 10,
@@ -123,13 +156,17 @@ const styles = StyleSheet.create({
   add: {
     padding: 10,
     backgroundColor: 'green',
+    textAlign: 'center'
   },
   touchText:{
-    color: 'white'
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center'
   },
   remove:{
     padding: 10,
     backgroundColor: 'red',
+    textAlign: 'center',
   },
   counterContainer: {
     justifyContent: 'center',
