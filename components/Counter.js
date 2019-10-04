@@ -5,8 +5,17 @@ import { StyleSheet,
          View,
          Button,
          TouchableOpacity,
+         Keyboard,
+         TouchableWithoutFeedback,
          AsyncStorage } from 'react-native';
 import RadioGroup from 'react-native-radio-buttons-group';
+import SafeAreaView from 'react-native-safe-area-view';
+
+const DismissKeyboard = ({ children }) => (
+  <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+    {children}
+  </TouchableWithoutFeedback>
+);
 
 export default class Counter extends Component {
   state = {
@@ -28,6 +37,7 @@ export default class Counter extends Component {
     })
 
   }
+
   changeButton = data => this.setState({ data });
   addCounter = () => this.setState({ counter: this.state.counter += 0.5});
   subtractCounter = () => {
@@ -37,19 +47,23 @@ export default class Counter extends Component {
     }
 }
   submitVacation = (e) => {
-    console.log(e)
     if(e === 'add'){
-      this.props.updateVacation( this.state.counter );
-      console.log(e.target)
+      this.props.updateVacation( this.state.counter, this.state.log );
+      this.setState({ log: '' })
+      Keyboard.dismiss();
+      alert('Vacation Time Successfully Entered!');
     } else {
-      this.props.updateVacation( (-1) * this.state.counter );
+      this.props.updateVacation( (-1 * this.state.counter), this.state.log );
+      this.setState({ log: '' })
+      Keyboard.dismiss();
+      alert('Vacation Time Successfully Entered!');
     }
   };
   submitSick = (e) => {
     if(e === 'add'){
-      this.props.updateSick( this.state.counter )
+      this.props.updateSick( this.state.counter, this.state.log )
     } else {
-      this.props.updateSick( (-1) * this.state.counter );
+      this.props.updateSick( (-1 * this.state.counter), this.state.log );
     }
   };
   clearCounter = () => {
@@ -57,10 +71,11 @@ export default class Counter extends Component {
   };
 
   render(){
+    const navigate  = this.props.navigate;
     let selectedButton = this.state.data.find(e => e.selected == true);
     selectedButton = selectedButton ? selectedButton.value : this.state.data[0].label;
     return(
-      <View style={ styles.container }>
+      <SafeAreaView style={ styles.container }>
         <View style={ styles.counterContainer}>
           <TouchableOpacity
             style = { [styles.buttons, styles.add] }
@@ -78,50 +93,67 @@ export default class Counter extends Component {
           >
             <Text style={ styles.touchText }>-</Text>
           </TouchableOpacity>
-          <View style={ styles.textView}>
-            <TextInput
-              style = {styles.textInput}
-              onChangeText={text => this.logChange(text)}
-              value = {this.state.log}
-              placeholder = 'Notes (140 char limit)'
-              multiline = {true}
-              maxLength= {140}
-            />
+          <View style = { styles.addOrRemove }>
+            <TouchableOpacity
+              style = { [styles.buttons, styles.add] }
+              value = "add"
+              onPress = { selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e.value = 'add')
+                          : (e) => this.submitSick(e.value = 'add')
+
+                        }>
+              <Text style={styles.touchText}>ADD</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style = { [styles.buttons, styles.remove] }
+              onPress = { selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e = 'remove')
+                          : (e) => this.submitSick(e = 'remove')
+                        }>
+              <Text style={styles.touchText}>REMOVE</Text>
+            </TouchableOpacity>
           </View>
+          <View style={ styles.textView}>
+              <TextInput
+                style = {styles.textInput}
+                onChangeText={text => this.logChange(text)}
+                blurOnSubmit={true}
+                onSubmitEditing={Keyboard.dismiss}
+                value = {this.state.log}
+                placeholder = 'Notes (140 char limit)'
+                multiline = {true}
+                maxLength= {140}
+              />
         </View>
+      </View>
         <Button
           title = "clear counter"
           onPress = { this.clearCounter } />
         <RadioGroup radioButtons = { this.state.data }
                     onPress = { this.changeButton }
         />
-        <TouchableOpacity
-          style = { [styles.buttons, styles.add] }
-          value = "add"
-          onPress = { selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e.value = 'add')
-                      : (e) => this.submitSick(e.value = 'add')
-                    }
-        >
-          <Text style={styles.touchText}>ADD</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style = { [styles.buttons, styles.remove] }
-          onPress = { selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e = 'remove')
-                      : (e) => this.submitSick(e = 'remove')
-                    }
-        >
-        <Text style={styles.touchText}>REMOVE</Text>
-      </TouchableOpacity>
-      </View>
+
+      <Button
+          title="LOG"
+          onPress={() => navigate('Log', {
+            vacation: this.props.vacation,
+            sick: this.props.sick
+          })}
+        />
+      </SafeAreaView>
     )
   }
 }
 const styles = StyleSheet.create({
   container: {
-    flex: 0,
-    justifyContent: 'center',
     backgroundColor: '#CCFFFF'
 
+  },
+  addOrRemove:{
+    display: 'flex',
+    flex: 0,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignContent: 'center',
   },
   textView:{
     borderColor: 'black',
@@ -136,8 +168,8 @@ const styles = StyleSheet.create({
   },
   textInput:{
     textAlign: 'center',
-    height: 100,
-    width: 150,
+    height: 150,
+    width: 200,
     backgroundColor: 'mintcream',
     borderRadius: 10
   },
@@ -154,9 +186,11 @@ const styles = StyleSheet.create({
 
   },
   add: {
+    width: '40%',
     padding: 10,
     backgroundColor: 'green',
-    textAlign: 'center'
+    textAlign: 'center',
+    alignItems: 'center',
   },
   touchText:{
     color: 'white',
@@ -164,15 +198,17 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   remove:{
+    width: '40%',
     padding: 10,
     backgroundColor: 'red',
     textAlign: 'center',
+    alignItems: 'center',
   },
   counterContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: 350,
-    width: 175,
+    height: 500,
+    width: 250,
     margin: 10,
     backgroundColor: 'lightgray',
     borderColor: 'black',
