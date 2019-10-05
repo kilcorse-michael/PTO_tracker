@@ -23,11 +23,11 @@ export default class Window extends Component {
   updateVacation = async (num, text) => {
     let updateTime = this.state.vacation += num;
     let today = new Date();
-    await this.deleteVacation();
-    let timeStamp = today.toDateString().split(' ').slice(1).join(' ');
-    let logEntry = { currentDate: timeStamp,
-                     removedOrAdded: '+/-' + ' ' + num,
+    // let timeStamp = today.toDateString().split(' ').slice(1).join(' ');
+    let logEntry = { currentDate: today,
+                     removedOrAdded: num,
                      totalVacationTime: updateTime,
+                     type: 'Vacation',
                      notes: text };
     await this.saveVacationTime(logEntry);
     await this.getVacationTime();
@@ -35,8 +35,14 @@ export default class Window extends Component {
 
   updateSick = async (num, text) => {
     let updateTime = this.state.sickTime += num;
-    await this.deleteSickTime();
-    await this.saveSickTime(updateTime);
+    let today = new Date();
+    // let timeStamp = today.toDateString().split(' ').slice(1).join(' ');
+    let logEntry = { currentDate: today,
+                     removedOrAdded: num,
+                     totalSickTime: updateTime,
+                     type: 'Sick',
+                     notes: text };
+    await this.saveSickTime(logEntry);
     await this.getSickTime();
   };
 
@@ -52,11 +58,17 @@ export default class Window extends Component {
     .catch(err => alert(err.message))
   };
 
-  saveSickTime = async (time) => {
-    let stringTime = JSON.stringify(time);
-    AsyncStorage.setItem('sickTime', stringTime)
-    .catch(err => alert(err.message))
+  saveSickTime = async (logEntry) => {
+    const existingLogs = await AsyncStorage.getItem('sickTime');
+    let newLogs = JSON.parse(existingLogs);
+    if(!newLogs){
+      newLogs = [];
     }
+    newLogs.push(logEntry);
+    await AsyncStorage.setItem('sickTime', JSON.stringify(newLogs))
+    .then(() => console.log('Success!'))
+    .catch(err => alert(err.message))
+  };
 
   getVacationTime = async () => {
     const vTime = await AsyncStorage.getItem('vacationTime');
@@ -70,16 +82,14 @@ export default class Window extends Component {
   };
 
   getSickTime = async () => {
-    let sTime = '';
-    sTime = AsyncStorage.getItem('sickTime')
-    .then((sTime) => {
-      if(sTime !== null){
-        parsedStime = JSON.parse(sTime);
-        this.setState({sickTime: parsedStime})
-      }
-    })
-    .then((parsedVtime) => { return parsedVtime} )
-    .catch(err => alert(err.message));
+    const sTime = await AsyncStorage.getItem('sickTime');
+    if(!sTime){
+      this.setState({ sickTime: 0})
+      return
+    }
+    const sickObj = JSON.parse(sTime);
+    this.setState({ sickTime: sickObj[sickObj.length -1].totalSickTime})
+    return
   };
 
   deleteVacation = async () =>{
