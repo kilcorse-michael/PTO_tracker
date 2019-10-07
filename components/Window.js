@@ -3,7 +3,9 @@ import { StyleSheet,
          Text,
          View,
          Button,
-         AsyncStorage } from 'react-native';
+         AsyncStorage,
+         Keyboard,
+         TouchableWithoutFeedback } from 'react-native';
 import SafeAreaView from 'react-native-safe-area-view';
 import Counter from './Counter';
 
@@ -22,8 +24,10 @@ export default class Window extends Component {
 
   updateVacation = async (num, text) => {
     let updateTime = this.state.vacation += num;
+    if(updateTime < 0){
+      updateTime = 0;
+    }
     let today = new Date();
-    // let timeStamp = today.toDateString().split(' ').slice(1).join(' ');
     let logEntry = { currentDate: today,
                      removedOrAdded: num,
                      totalVacationTime: updateTime,
@@ -35,6 +39,9 @@ export default class Window extends Component {
 
   updateSick = async (num, text) => {
     let updateTime = this.state.sickTime += num;
+    if(updateTime < 0){
+      updateTime = 0;
+    }
     let today = new Date();
     // let timeStamp = today.toDateString().split(' ').slice(1).join(' ');
     let logEntry = { currentDate: today,
@@ -73,7 +80,7 @@ export default class Window extends Component {
   getVacationTime = async () => {
     const vTime = await AsyncStorage.getItem('vacationTime');
     if(!vTime){
-      this.setState({ vacation: 0})
+      this.setState({ vacation: 0});
       return
     }
     const vacationObj = JSON.parse(vTime);
@@ -108,21 +115,32 @@ export default class Window extends Component {
     }
   };
 
+  update = () => {
+    this.setState({
+      vacation: 0,
+      sickTime: 0
+    });
+  }
 
   render(){
     const {navigate} = this.props.navigation;
     return(
       <SafeAreaView style = {styles.container}>
-        <Header currentVacation = { this.state.vacation }
-                currentSick = { this.state.sickTime } />
+        <TouchableWithoutFeedback onPress={ () => { Keyboard.dismiss() } }>
+          <View>
+            <Header currentVacation = { this.state.vacation }
+                    currentSick = { this.state.sickTime } />
 
-        <Counter vacation = {this.state.vacation}
-                 sick = {this.state.sickTime}
-                 navigate = { navigate }
-                 updateVacation = { this.updateVacation }
-                 updateSick = { this.updateSick }
-                 currentVacation = { this.state.vacation }
-                 currentSick = { this.state.sickTime }/>
+            <Counter vacation = {this.state.vacation}
+                     sick = {this.state.sickTime}
+                     navigate = { navigate }
+                     updateVacation = { this.updateVacation }
+                     updateSick = { this.updateSick }
+                     update = { this.update }
+                     currentVacation = { this.state.vacation }
+                     currentSick = { this.state.sickTime }/>
+          </View>
+        </TouchableWithoutFeedback>
       </SafeAreaView>
     )
   }

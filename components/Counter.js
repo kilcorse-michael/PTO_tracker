@@ -7,15 +7,12 @@ import { StyleSheet,
          TouchableOpacity,
          Keyboard,
          TouchableWithoutFeedback,
-         AsyncStorage } from 'react-native';
+         AsyncStorage,
+         Alert} from 'react-native';
 import RadioGroup from 'react-native-radio-buttons-group';
 import SafeAreaView from 'react-native-safe-area-view';
 
-const DismissKeyboard = ({ children }) => (
-  <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-    {children}
-  </TouchableWithoutFeedback>
-);
+
 
 export default class Counter extends Component {
   state = {
@@ -49,33 +46,81 @@ export default class Counter extends Component {
   submitVacation = (e) => {
     if(e === 'add'){
       this.props.updateVacation( this.state.counter, this.state.log );
-      this.setState({ log: '' })
+      this.setState({ log: '' });
       Keyboard.dismiss();
       alert('Vacation Time Successfully Entered!');
     } else {
       this.props.updateVacation( (-1 * this.state.counter), this.state.log );
       this.setState({ log: '' })
-      Keyboard.dismiss();
       alert('Vacation Time Successfully Entered!');
+      Keyboard.dismiss();
     }
   };
   submitSick = (e) => {
     if(e === 'add'){
-      this.props.updateSick( this.state.counter, this.state.log )
+      this.props.updateSick( this.state.counter, this.state.log );
+      this.setState({ log: '' });
+      alert('Sick time succesfully updated!');
     } else {
       this.props.updateSick( (-1 * this.state.counter), this.state.log );
+      this.setState({ log: '' });
+      alert('Sick time succesfully updated!')
     }
   };
   clearCounter = () => {
     return this.setState({counter: 0})
   };
+  addVacationOrSick = () => {
+    Alert.alert(
+      'Add time',
+      'Is everthing correct?',
+      [
+        {text: 'NO', onPress: console.log('No'), style: 'cancel'},
+        {text: 'YES', onPress: () => selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e.value = 'add')
+                                     : (e) => this.submitSick(e.value = 'add')},
+      ]
+    );
+  }
+  removeVacationOrSick = () => {
+    Alert.alert(
+      'Remove time',
+      'Is everthing correct?',
+      [
+        {text: 'NO', onPress: console.log('No'), style: 'cancel'},
+        {text: 'YES', onPress: () => selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e.value = 'remove')
+                              : (e) => this.submitSick(e.value = 'remove')},
+      ]
+    );
+  }
+  deleteAlert = () => {
+    Alert.alert(
+      'Are you sure?',
+      'Once you delete it cannot be undone!',
+      [
+        {
+          text: 'Cancel',
+       onPress: () => console.log('Cancel Pressed'),
+       style: 'cancel',
+     },
+     {text: 'DELETE', onPress: async () => {
+       await AsyncStorage.removeItem('vacationTime');
+       await AsyncStorage.removeItem('sickTime');
+       this.props.update();
+     }},
+   ]
+     );
+  }
 
   render(){
+    console.log(this.props.update)
     const navigate  = this.props.navigate;
     let selectedButton = this.state.data.find(e => e.selected == true);
     selectedButton = selectedButton ? selectedButton.value : this.state.data[0].label;
     return(
       <SafeAreaView style={ styles.container }>
+          <RadioGroup flexDirection = 'row'
+                      radioButtons = { this.state.data }
+                      onPress = { this.changeButton } />
         <View style={ styles.counterContainer}>
           <TouchableOpacity
             style = { [styles.buttons, styles.add] }
@@ -97,17 +142,14 @@ export default class Counter extends Component {
             <TouchableOpacity
               style = { [styles.buttons, styles.add] }
               value = "add"
-              onPress = { selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e.value = 'add')
-                          : (e) => this.submitSick(e.value = 'add')
-
-                        }>
+              onPress = {selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e.value = 'add')
+                                           : (e) => this.submitSick(e.value = 'add')}>
               <Text style={styles.touchText}>ADD</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style = { [styles.buttons, styles.remove] }
-              onPress = { selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e = 'remove')
-                          : (e) => this.submitSick(e = 'remove')
-                        }>
+              onPress = {selectedButton === 'Vacation Time' ? (e) => this.submitVacation(e.value = 'remove')
+                                    : (e) => this.submitSick(e.value = 'remove')}>
               <Text style={styles.touchText}>REMOVE</Text>
             </TouchableOpacity>
           </View>
@@ -118,33 +160,34 @@ export default class Counter extends Component {
                 blurOnSubmit={true}
                 onSubmitEditing={Keyboard.dismiss}
                 value = {this.state.log}
-                placeholder = 'Notes (140 char limit)'
+                placeholder = 'Notes (40 char limit)'
                 multiline = {true}
-                maxLength= {140}
+                maxLength= {40}
               />
-        </View>
+          </View>
+          <Button
+            title = "clear counter"
+            onPress = { this.clearCounter } />
       </View>
-        <Button
-          title = "clear counter"
-          onPress = { this.clearCounter } />
-        <RadioGroup radioButtons = { this.state.data }
-                    onPress = { this.changeButton }
-        />
 
       <Button
           title="LOG"
           onPress={() => navigate('Log', {
             vacation: this.props.vacation,
-            sick: this.props.sick
+            sick: this.props.sick,
           })}
         />
+        <Button   onPress={()=> this.deleteAlert()}
+                  title= 'DELETE ALL (cannot be undone)'
+
+                />
       </SafeAreaView>
     )
   }
 }
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#CCFFFF'
+    backgroundColor: '#CCFFFF',
 
   },
   addOrRemove:{

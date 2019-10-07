@@ -12,7 +12,6 @@ export default class Log extends Component{
     let logArr = [];
     const response = await AsyncStorage.multiGet(['vacationTime', 'sickTime'],(err, stores) => {
       stores.map((result, i, store) => {
-      // get at each store's key/value so you can work with it
       let key = store[i][0];
       let value = store[i][1];
     });
@@ -20,19 +19,26 @@ export default class Log extends Component{
     const parsedVacation = JSON.parse(response[0][1]);
     const parsedSickTime = JSON.parse(response[1][1]);
     this.checkForNullAndSet(parsedVacation, parsedSickTime);
-    console.log(this.state.logData)
 }
 
     checkForNullAndSet = (vacation, sick) => {
-      if(vacation == null || sick == null){
-        this.setState.logData = [];
-      } else{
+
+      if(vacation !== null && sick === null){
+        const readDate = this.readableDate(vacation);
+        this.setState({logData: readDate});
+      } else if(sick !== null && vacation === null){
+        const readDate = this.readableDate(sick);
+        this.setState({logData: readDate});
+      } else if(vacation === null && sick === null){
+        this.setState({logData: []});
+      } else {
         const totalParsed = vacation.concat(sick);
         const sortedArr = this.sortByDate(totalParsed);
         const readDate = this.readableDate(sortedArr);
         this.setState({logData: readDate});
       }
-      return; 
+      return;
+
     }
     readableDate = (log) => {
       for(let i = 0; i < log.length; i++ ){
@@ -52,6 +58,7 @@ export default class Log extends Component{
 
 
   render(){
+    const update = this.props.navigation.getParam('update')
     return(
       <SafeAreaView style = {styles.container}>
         <Header currentVacation = {this.props.navigation.getParam('vacation')}
